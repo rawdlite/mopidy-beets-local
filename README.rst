@@ -18,7 +18,9 @@ Mopidy-BeetsLocal
    :target: https://coveralls.io/r/rawdlite/mopidy-beets-local?branch=master
    :alt: Test coverage
 
-Access local beets library
+Access local beets library via beets native api.
+No running beets web process required.
+Search by genre etc. supported.
 
 
 Installation
@@ -28,8 +30,6 @@ Install by running::
 
     pip install Mopidy-BeetsLocal
 
-Or, if available, install the Debian/Ubuntu package from `apt.mopidy.com
-<http://apt.mopidy.com/>`_.
 
 
 Configuration
@@ -39,7 +39,8 @@ Before starting Mopidy, you must add configuration for
 Mopidy-BeetsLocal to your Mopidy configuration file::
 
     [beetslocal]
-    # TODO: Add example of extension config
+    enabled = true
+    beetslibrary = /<your path>/beetslibrary.blb
 
 
 Project resources
