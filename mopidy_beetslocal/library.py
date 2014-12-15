@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
-
+import datetime 
 from mopidy import backend
 from mopidy.models import SearchResult,Track, Album, Artist
 logger = logging.getLogger(__name__)
@@ -94,6 +94,23 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if 'title' in item:
             track_kwargs['name'] = item['title']
 
+	if 'disc' in item:
+            track_kwargs['disc_no'] = item['disc']
+
+        if 'year' in item:
+            try:
+                d = datetime.datetime(item['year'],item['month'],item['day'])
+                track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
+            except:
+                track_kwargs['date'] = None
+
+        if 'original_year' in item:
+            if not track_kwargs['date']:
+                try:
+                    d = datetime.datetime(item['original_year'],item['original_month'],item['original_day'])
+                    track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
+                except:
+                    track_kwargs['date'] = None
         if 'date' in item:
             track_kwargs['date'] = item['date']
 
