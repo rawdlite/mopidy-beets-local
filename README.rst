@@ -54,6 +54,10 @@ Project resources
 Changelog
 =========
 
+v0.0.3 (UNRELEASED)
+----------------------------------------
+Switched to URI schema 'beetslocal'
+
 v0.0.2 (UNRELEASED)
 ----------------------------------------
 
