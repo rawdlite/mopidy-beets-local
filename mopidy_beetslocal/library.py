@@ -65,8 +65,11 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         beets_query = ""
         for key in query.keys():
             if key != 'any':
-                #beets_query += "::(" + "|".join(query[key]) + ") "
-                beets_query +=  key
+                if key == 'track_name':
+                    beets_query += 'title'
+                else:
+                    #beets_query += "::(" + "|".join(query[key]) + ") "
+                    beets_query +=  key
             #beets_query += "::(" + "|".join(query[key]) + ") "
             beets_query += ":" + " ".join(query[key]) + " "
         return beets_query.strip()
@@ -127,6 +130,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
 	if 'disc' in item:
             track_kwargs['disc_no'] = item['disc']
+
+        if 'mtime' in item:
+            track_kwargs['last_modified'] = item['mtime']
 
         track_kwargs['date'] = None
         if self.backend.use_original_release_date:
