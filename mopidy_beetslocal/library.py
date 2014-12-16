@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import datetime 
+import locale
 from mopidy import backend
 from mopidy.models import SearchResult,Track, Album, Artist
 logger = logging.getLogger(__name__)
@@ -66,6 +67,25 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 tracks.append(self._convert_item(track))
             return tracks
         return None
+
+    def _decode_path(self, path):
+        default_encoding = locale.getpreferredencoding()
+        decoded_path = None
+        try:
+            decoded_path = path.decode(default_encoding)
+        except:
+            pass
+        if not decoded_path:
+            try:
+                decoded_path = path.decode('utf-8')
+            except:
+                pass
+        if not decoded_path:
+            try:
+                decoded_path = path.decode('ISO-8859-1')
+            except:
+                pass
+        return decoded_path
     
     def _convert_item(self, item):
         if not item:
@@ -111,9 +131,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
                 except:
                     track_kwargs['date'] = None
-        if 'date' in item:
-            track_kwargs['date'] = item['date']
-
+        
         if 'mb_trackid' in item:
             track_kwargs['musicbrainz_id'] = item['mb_trackid']
 
@@ -128,7 +146,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 item['mb_albumartistid'])
 
         if 'path' in item:
-            track_kwargs['uri'] = "file://%s" % item['path'].decode("ISO-8859-1")
+            track_kwargs['uri'] = "file://%s" % self._decode_path(item['path'])
 
 
         if 'length' in item:
