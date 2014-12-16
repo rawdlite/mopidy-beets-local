@@ -55,6 +55,7 @@ Changelog
 =========
 
 v0.0.2 (UNRELEASED)
+----------------------------------------
 
 Introducing new optional config option 'use_original_release_date'.
 Path decoding now hopefully working for different locale.
