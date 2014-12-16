@@ -39,8 +39,19 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
     def get_track(self, id):
         track = self.lib.get_item(id)
-        logger.info("retrieved track %s" % track)
-        return track
+        return self._convert_item(track)
+
+    def lookup(self, uri):
+	logger.debug(uri)
+        logger.debug("uri = %s" % type(uri).__name__)
+        id = self.backend._extract_id(uri)
+        try:
+            track = self.get_track(id)
+            logger.debug('Beets track for id "%s": %s' % (id, uri))
+            return [track]
+        except Exception as error:
+            logger.debug('Failed to lookup "%s": %s' % (uri, error))
+            return []
 
     def _validate_query(self, query):
         for (_, values) in query.iteritems():
@@ -147,7 +158,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 item['mb_albumartistid'])
 
         if 'path' in item:
-            track_kwargs['uri'] = "file://%s" % self._decode_path(item['path'])
+            track_kwargs['uri'] = "beetslocal:%s:%s" % (item['id'],self._decode_path(item['path']))
 
 
         if 'length' in item:
