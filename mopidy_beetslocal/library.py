@@ -117,20 +117,21 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 	if 'disc' in item:
             track_kwargs['disc_no'] = item['disc']
 
-        if 'year' in item:
-            try:
-                d = datetime.datetime(item['year'],item['month'],item['day'])
-                track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
-            except:
-                track_kwargs['date'] = None
-
-        if 'original_year' in item:
-            if not track_kwargs['date']:
+        track_kwargs['date'] = None
+        if self.backend.use_original_release_date:
+            if 'original_year' in item:
                 try:
                     d = datetime.datetime(item['original_year'],item['original_month'],item['original_day'])
                     track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
                 except:
-                    track_kwargs['date'] = None
+                    pass
+        else:
+            if 'year' in item:
+                try:
+                    d = datetime.datetime(item['year'],item['month'],item['day'])
+                    track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
+                except:
+                    pass
         
         if 'mb_trackid' in item:
             track_kwargs['musicbrainz_id'] = item['mb_trackid']

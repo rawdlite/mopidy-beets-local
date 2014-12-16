@@ -14,6 +14,7 @@ class BeetsLocalBackend(pykka.ThreadingActor, backend.Backend):
         super(BeetsLocalBackend, self).__init__()
 
         self.beetslibrary = config['beetslocal']['beetslibrary']
+        self.use_original_release_date = config['beetslocal']['use_original_release_date']
         logger.debug("Got brary %s" % (self.beetslibrary))
         self.library = BeetsLocalLibraryProvider(backend = self)
         self.playlists = None
