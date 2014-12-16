@@ -41,7 +41,7 @@ Mopidy-BeetsLocal to your Mopidy configuration file::
     [beetslocal]
     enabled = true
     beetslibrary = /<your path>/beetslibrary.blb
-
+    use_original_release_date = false
 
 Project resources
 =================
@@ -53,6 +53,13 @@ Project resources
 
 Changelog
 =========
+
+v0.0.2 (UNRELEASED)
+
+Introducing new optional config option 'use_original_release_date'.
+Path decoding now hopefully working for different locale.
+Returns release date and Disc Number.
+
 
 v0.0.1 (UNRELEASED)
 ----------------------------------------
