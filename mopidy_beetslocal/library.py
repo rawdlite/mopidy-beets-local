@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import logging
 import datetime 
 import locale
+import json
 from mopidy import backend
 from mopidy.models import SearchResult,Track, Album, Artist
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     beets_query +=  key
             #beets_query += "::(" + "|".join(query[key]) + ") "
             beets_query += ":" + " ".join(query[key]) + " "
-        return beets_query.strip()
+        return json.dumps(beets_query.strip())
         
     def _parse_query(self, res):
         if len(res) > 0:
