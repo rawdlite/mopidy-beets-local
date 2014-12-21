@@ -2,7 +2,9 @@ from __future__ import unicode_literals
 
 import unittest
 
-from mopidy_beetslocal import Extension, frontend as frontend_lib
+import mock
+
+from mopidy_beetslocal import Extension, actor as backend_lib
 
 
 class ExtensionTest(unittest.TestCase):
@@ -14,14 +16,20 @@ class ExtensionTest(unittest.TestCase):
 
         self.assertIn('[beetslocal]', config)
         self.assertIn('enabled = true', config)
+        self.assertIn('beetslibrary =', config)
+        self.assertIn('use_original_release_date', config)
 
     def test_get_config_schema(self):
         ext = Extension()
 
         schema = ext.get_config_schema()
+        self.assertIn('enabled', schema)
+        self.assertIn('beetslibrary', schema)
 
-        # TODO Test the content of your config schema
-        #self.assertIn('username', schema)
-        #self.assertIn('password', schema)
-
-    # TODO Write more tests
+    def test_setup(self):
+        registry = mock.Mock()
+        ext = Extension()
+        ext.setup(registry)
+        registry.add.assert_called_with(
+            'backend',
+            backend_lib.BeetsLocalBackend)

@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 
-import logging
-import datetime 
-import locale
+import datetime
 import json
+import locale
+import logging
+
 from mopidy import backend
-from mopidy.models import SearchResult,Track, Album, Artist
+from mopidy.models import Album, Artist, SearchResult, Track
 logger = logging.getLogger(__name__)
 
 
@@ -28,22 +29,20 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             return SearchResult(
                 uri='beetslocal:search-all',
                 tracks=self._parse_query(tracks))
-
         self._validate_query(query)
-        query=self._build_beets_query(query)
+        query = self._build_beets_query(query)
         logger.debug('Query "%s":' % query)
-	tracks = self.lib.items(query)
+        tracks = self.lib.items(query)
         return SearchResult(
-            uri='beetslocal:search-' + query.replace(' ','_'),
+            uri='beetslocal:search-' + query.replace(' ', '_'),
             tracks=self._parse_query(tracks) or [])
-
 
     def get_track(self, id):
         track = self.lib.get_item(id)
         return self._convert_item(track)
 
     def lookup(self, uri):
-	logger.debug(uri)
+        logger.debug(uri)
         logger.debug("uri = %s" % type(uri).__name__)
         id = self.backend._extract_id(uri)
         try:
@@ -69,12 +68,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 if key == 'track_name':
                     beets_query += 'title'
                 else:
-                    #beets_query += "::(" + "|".join(query[key]) + ") "
-                    beets_query +=  key
-            #beets_query += "::(" + "|".join(query[key]) + ") "
+                    # beets_query += "::(" + "|".join(query[key]) + ") "
+                    beets_query += key
+            # beets_query += "::(" + "|".join(query[key]) + ") "
             beets_query += ":" + " ".join(query[key]) + " "
         return json.dumps(beets_query.strip())
-        
+
     def _parse_query(self, res):
         if len(res) > 0:
             tracks = []
@@ -101,7 +100,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             except:
                 pass
         return decoded_path
-    
+
     def _convert_item(self, item):
         if not item:
             return
@@ -129,7 +128,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if 'title' in item:
             track_kwargs['name'] = item['title']
 
-	if 'disc' in item:
+        if 'disc' in item:
             track_kwargs['disc_no'] = item['disc']
 
         if 'mtime' in item:
@@ -139,18 +138,24 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if self.backend.use_original_release_date:
             if 'original_year' in item:
                 try:
-                    d = datetime.datetime(item['original_year'],item['original_month'],item['original_day'])
+                    d = datetime.datetime(
+                        item['original_year'],
+                        item['original_month'],
+                        item['original_day'])
                     track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
                 except:
                     pass
         else:
             if 'year' in item:
                 try:
-                    d = datetime.datetime(item['year'],item['month'],item['day'])
+                    d = datetime.datetime(
+                        item['year'],
+                        item['month'],
+                        item['day'])
                     track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
                 except:
                     pass
-        
+
         if 'mb_trackid' in item:
             track_kwargs['musicbrainz_id'] = item['mb_trackid']
 
@@ -165,21 +170,16 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 item['mb_albumartistid'])
 
         if 'path' in item:
-            track_kwargs['uri'] = "beetslocal:%s:%s" % (item['id'],self._decode_path(item['path']))
-
+            track_kwargs['uri'] = "beetslocal:%s:%s" % (
+                item['id'],
+                self._decode_path(item['path']))
 
         if 'length' in item:
-            track_kwargs['length'] = int(item['length']) * 1000   
-       
-       # if 'album_id' in item:
-       #     album_art_url = '%s/album/%s/art' % (
-       #         self.api_endpoint, data['album_id'])
-       #     album_kwargs['images'] = [album_art_url]
+            track_kwargs['length'] = int(item['length']) * 1000
 
         if artist_kwargs:
             artist = Artist(**artist_kwargs)
             track_kwargs['artists'] = [artist]
-
 
         if albumartist_kwargs:
             albumartist = Artist(**albumartist_kwargs)

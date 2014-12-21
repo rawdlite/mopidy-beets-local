@@ -26,7 +26,6 @@ class Extension(ext.Extension):
         schema = super(Extension, self).get_config_schema()
         schema['beetslibrary'] = config.String()
         schema['use_original_release_date'] = config.Boolean(optional=True)
-        #schema['password'] = config.Secret()
         return schema
 
     def setup(self, registry):
