@@ -42,8 +42,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return self._convert_item(track)
 
     def lookup(self, uri):
-        logger.debug(uri)
-        logger.debug("uri = %s" % type(uri).__name__)
+        logger.debug("uri = %s of type %s" % (uri, type(uri).__name__))
         id = self.backend._extract_id(uri)
         try:
             track = self.get_track(id)
