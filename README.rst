@@ -18,9 +18,9 @@ Mopidy-BeetsLocal
    :target: https://coveralls.io/r/rawdlite/mopidy-beets-local?branch=master
    :alt: Test coverage
 
-Access local beets library via beets native api.
-No running beets web process required.
-Search by genre etc. supported.
+Access a local beets library via beets native api.
+No running beets web process is required.
+Search by specific fields is fully supported.
 
 
 Installation
@@ -54,6 +54,10 @@ Project resources
 Changelog
 =========
 
+v0.0.5
+----------------------------------------
+added albums in lookup and search
+
 v0.0.4
 ----------------------------------------
 cleanup
@@ -67,8 +71,7 @@ v0.0.2 (UNRELEASED)
 
 Introducing new optional config option 'use_original_release_date'.
 Path decoding now hopefully working for different locale.
-Returns release date and Disc Number.
-
+Tracks have release date and disc_num.
 
 v0.0.1 (UNRELEASED)
 ----------------------------------------

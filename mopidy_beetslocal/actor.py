@@ -22,26 +22,23 @@ class BeetsLocalBackend(pykka.ThreadingActor, backend.Backend):
         self.playlists = None
         self.uri_schemes = ['beetslocal']
 
-    def _extract_path(self, path):
-        logger.debug("convert path = %s" % path)
-        if not path.startswith('beetslocal:'):
+    def _extract_uri(self, uri):
+        logger.debug("convert uri = %s" % uri)
+        if not uri.startswith('beetslocal:'):
             raise ValueError('Invalid URI.')
-        path = path.split(b':', 2)[2]
-        logger.debug("extracted path = %s" % path)
-        return path
-
-    def _extract_id(self, path):
-        logger.debug("convert path = %s" % path)
-        if not path.startswith('beetslocal:'):
-            raise ValueError('Invalid URI.')
-        id = path.split(b':', 2)[1]
-        logger.debug("extracted id = %s" % id)
-        return id
+        path = uri.split(b':', 3)[3]
+        beets_id = uri.split(b':', 3)[2]
+        item_type = uri.split(b':', 3)[1]
+        logger.debug("extracted path = %s id = %s type = %s" % (
+            path, beets_id, item_type))
+        return {'path': path,
+                'beets_id': int(beets_id),
+                'item_type': item_type}
 
 
 class BeetsLocalPlaybackProvider(backend.PlaybackProvider):
 
     def play(self, track):
         local_track = track.copy(uri="file://%s" %
-                                 self.backend._extract_path(track.uri))
+                                 self.backend._extract_uri(track.uri)['path'])
         return super(BeetsLocalPlaybackProvider, self).play(local_track)
