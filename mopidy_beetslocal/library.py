@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import datetime
-import json
 import locale
 import logging
 
@@ -21,7 +20,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         logger.debug("Find query: %s in uris: %s" % (query, uris))
         self._validate_query(query)
         query = self._build_exact_query(query)
-        uri='beetslocal:find:' + query.replace(' ', '_')
+        uri = 'beetslocal:find:' + query.replace(' ', '_')
         tracks = self.lib.items(query)
         logger.debug("Find found %s tracks" % len(tracks))
         albums = self.lib.albums(query)
@@ -34,12 +33,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
     def search(self, query=None, uris=None):
         logger.debug("Search query: %s in uris: %s" % (query, uris))
         if not query:
-            uri='beetslocal:search-all'
+            uri = 'beetslocal:search-all'
         else:
             self._validate_query(query)
             query = self._build_beets_query(query)
             logger.debug('Build Query "%s":' % query)
-            uri='beetslocal:search:' + query.replace(' ', '_')
+            uri = 'beetslocal:search:' + query.replace(' ', '_')
         tracks = self.lib.items(query)
         logger.debug("Query found %s tracks" % len(tracks))
         albums = self.lib.albums(query)
@@ -119,8 +118,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             logger.info(beets_query)
         # return json.dumps(self._decode_path(beets_query).strip())
         return beets_query.strip()
-
-        
 
     def _decode_path(self, path):
         default_encoding = locale.getpreferredencoding()
