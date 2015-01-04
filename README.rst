@@ -46,9 +46,9 @@ Mopidy-BeetsLocal to your Mopidy configuration file::
 Project resources
 =================
 
-- `Source code <https://github.com/rawdlite/mopidy-beetslocal>`_
-- `Issue tracker <https://github.com/rawdlite/mopidy-beetslocal/issues>`_
-- `Development branch tarball <https://github.com/rawdlite/mopidy-beetslocal/archive/master.tar.gz#egg=Mopidy-BeetsLocal-dev>`_
+- `Source code <https://github.com/rawdlite/mopidy-beets-local>`_
+- `Issue tracker <https://github.com/rawdlite/mopidy-beets-local/issues>`_
+- `Development branch tarball <https://github.com/rawdlite/mopidy-beets-local/archive/master.tar.gz#egg=Mopidy-BeetsLocal-dev>`_
 
 
 Changelog
@@ -57,6 +57,7 @@ Changelog
 v0.0.5
 ----------------------------------------
 added albums in lookup and search
+fixed links in Project resources
 
 v0.0.4
 ----------------------------------------

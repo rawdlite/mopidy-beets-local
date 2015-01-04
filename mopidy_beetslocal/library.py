@@ -18,28 +18,36 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         self.lib = beets.library.Library(self.backend.beetslibrary)
 
     def find_exact(self, query=None, uris=None):
-            return self.search(query=query, uris=uris)
+        logger.debug("Find query: %s in uris: %s" % (query, uris))
+        self._validate_query(query)
+        query = self._build_exact_query(query)
+        uri='beetslocal:find:' + query.replace(' ', '_')
+        tracks = self.lib.items(query)
+        logger.debug("Find found %s tracks" % len(tracks))
+        albums = self.lib.albums(query)
+        logger.debug("Find found %s albums" % len(albums))
+        return SearchResult(
+            uri=uri,
+            tracks=[self._convert_item(track) for track in tracks],
+            albums=[self._convert_album(album) for album in albums])
 
     def search(self, query=None, uris=None):
         logger.debug("Search query: %s in uris: %s" % (query, uris))
         if not query:
-            logger.debug("No query => browse library")
-            # Fetch all data(browse library)
-            tracks = self.lib.items()
-            return SearchResult(
-                uri='beetslocal:search-all',
-                tracks=self._parse_query(tracks))
-        self._validate_query(query)
-        query = self._build_beets_query(query)
-        logger.debug('Build Query "%s":' % query)
+            uri='beetslocal:search-all'
+        else:
+            self._validate_query(query)
+            query = self._build_beets_query(query)
+            logger.debug('Build Query "%s":' % query)
+            uri='beetslocal:search:' + query.replace(' ', '_')
         tracks = self.lib.items(query)
         logger.debug("Query found %s tracks" % len(tracks))
         albums = self.lib.albums(query)
         logger.debug("Query found %s albums" % len(albums))
         return SearchResult(
-            uri='beetslocal:search:' + query.replace(' ', '_'),
-            tracks=self._parse_tracks(tracks),
-            albums=self._parse_albums(albums))
+            uri=uri,
+            tracks=[self._convert_item(track) for track in tracks],
+            albums=[self._convert_album(album) for album in albums])
 
     def get_track(self, beets_id):
         track = self.lib.get_item(beets_id)
@@ -87,20 +95,32 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             if key != 'any':
                 if key == 'track_name':
                     beets_query += 'title'
-                elif key == 'artist':
-                    beets_query += 'albumartist'
+                # elif key == 'artist':
+                #    beets_query += 'albumartist'
                 else:
-                    # beets_query += "::(" + "|".join(query[key]) + ") "
                     beets_query += key
             # beets_query += "::(" + "|".join(query[key]) + ") "
             beets_query += ":" + " ".join(query[key]) + " "
-        return json.dumps(beets_query.strip())
+            logger.info(beets_query)
+        # return json.dumps(self._decode_path(beets_query).strip())
+        return '\'%s\'' % beets_query.strip()
 
-    def _parse_tracks(self, res):
-        tracks = []
-        for track in res:
-            tracks.append(self._convert_item(track))
-        return tracks
+    def _build_exact_query(self, query):
+        beets_query = ""
+        for key in query.keys():
+            if key != 'any':
+                if key == 'track_name':
+                    beets_query += 'title'
+                # elif key == 'artist':
+                #    beets_query += 'albumartist'
+                else:
+                    beets_query += key
+            beets_query += "::^(" + "|".join(query[key]) + ")$ "
+            logger.info(beets_query)
+        # return json.dumps(self._decode_path(beets_query).strip())
+        return beets_query.strip()
+
+        
 
     def _decode_path(self, path):
         default_encoding = locale.getpreferredencoding()
@@ -150,6 +170,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
         if 'disc' in item:
             track_kwargs['disc_no'] = item['disc']
+
+        if 'genre' in item:
+            track_kwargs['genre'] = item['genre']
+
+        if 'comments' in item:
+            track_kwargs['comment'] = item['comments']
 
         if 'bitrate' in item:
             track_kwargs['bitrate'] = item['bitrate']
@@ -213,14 +239,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             track_kwargs['album'] = album
 
         track = Track(**track_kwargs)
-
         return track
-
-    def _parse_albums(self, res):
-        albums = []
-        for album in res:
-            albums.append(self._convert_album(album))
-        return albums
 
     def _convert_album(self, album):
         if not album:
