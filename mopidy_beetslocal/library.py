@@ -5,11 +5,16 @@ import locale
 import logging
 
 from mopidy import backend
-from mopidy.models import Album, Artist, SearchResult, Track
+from mopidy.models import Album, Artist, Ref, SearchResult, Track
+
+from . import translator
+
 logger = logging.getLogger(__name__)
 
 
 class BeetsLocalLibraryProvider(backend.LibraryProvider):
+    ROOT_URI = 'beetslocal:root'
+    root_directory = Ref.directory(uri=ROOT_URI, name='Local (beets)')
 
     def __init__(self, *args, **kwargs):
         super(BeetsLocalLibraryProvider, self).__init__(*args, **kwargs)
@@ -47,6 +52,61 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             uri=uri,
             tracks=[self._convert_item(track) for track in tracks],
             albums=[self._convert_album(album) for album in albums])
+
+    def browse(self, uri):
+        logger.debug("Browse being called for %s" % uri)
+        level, identifier = translator.parse_uri(uri)
+        logger.debug("Got parsed to level: %s - identifier: %s" % (level,
+                                                                   identifier))
+        result = []
+        if not level:
+            logger.error("No level for uri %s" % uri)
+            # import pdb; pdb.set_trace()
+        if level == 'root':
+            for row in self._browse_genre():
+                result.append(Ref.directory(
+                    uri=translator.build_uri('genre', row[0]),
+                    name=row[0]))
+        elif level == "genre":
+            for row in self._browse_artist(identifier):
+                result.append(Ref.artist(
+                    uri=translator.build_uri('artist', row[0]),
+                    name=row[0]))
+        elif level == "artist":
+            for album in self._browse_album(identifier):
+                result.append(Ref.album(
+                    uri=translator.build_uri('album', str(album.id)),
+                    name=album.album))
+        elif level == "album":
+            for track in self._browse_track(identifier):
+                result.append(Ref.track(
+                    uri="beetslocal:track:%s:%s" % (track.id,
+                                                    track.path.decode('utf8')),
+                    name=track.title))
+        else:
+            logger.debug('Unknown URI: %s', uri)
+        return result
+
+    def _browse_track(self, album_id):
+        return self.lib.items('album_id:\'%s\'' % album_id)
+
+    def _browse_album(self, artist):
+        return self.lib.albums('albumartist:\'%s\'' % artist)
+
+    def _browse_artist(self, genre):
+        return self._query_beets_db('select Distinct albumartist '
+                                    'from albums where genre'
+                                    ' = \'%s\' order by albumartist' % genre)
+
+    def _browse_genre(self):
+        return self._query_beets_db('select Distinct genre '
+                                    'from albums order by genre')
+
+    def _query_beets_db(self, statement):
+        result = []
+        with self.lib.transaction() as tx:
+            result = tx.query(statement)
+        return result
 
     def get_track(self, beets_id):
         track = self.lib.get_item(beets_id)
