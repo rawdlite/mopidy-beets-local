@@ -31,6 +31,10 @@ Install by running::
     pip install Mopidy-BeetsLocal
 
 
+Mopidy-BeetsLocal now uses uritools.
+If you have not already done so, you need to install uritools::
+
+   pip install uritools
 
 Configuration
 =============
@@ -53,6 +57,11 @@ Project resources
 
 Changelog
 =========
+v.0.0.7
+---------------------------------------
+-Media Library in ncmpcpp works now.
+-Various Artist limited to genre
+
 v0.0.6
 ---------------------------------------
 added browsing
