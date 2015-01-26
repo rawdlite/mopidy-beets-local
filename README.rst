@@ -31,10 +31,6 @@ Install by running::
     pip install Mopidy-BeetsLocal
 
 
-Mopidy-BeetsLocal now uses uritools.
-If you have not already done so, you need to install uritools::
-
-   pip install uritools
 
 Configuration
 =============
