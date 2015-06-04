@@ -25,11 +25,11 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         logger.debug("Find query: %s in uris: %s" % (query, uris))
         self._validate_query(query)
         # artists = []
-        # albums = []
-        # if not (query.has_key('track_name') or query.has_key('composer')):
+        albums = []
+        if not (query.has_key('track_name') or query.has_key('composer')):
         # when trackname or composer is queried dont search for albums
-        #    albums=self._find_albums(query)
-        #    logger.debug("Find found %s albums" % len(albums))
+            albums=self._find_albums(query)
+            logger.debug("Find found %s albums" % len(albums))
         #    artists=self._find_artists(query)
         #    logger.debug("Find found %s artists" % len(artists))
         tracks = self._find_tracks(query)
@@ -40,7 +40,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                            'find',
                            query),
             # artists=artists,
-            # albums=albums,
+            albums=albums,
             tracks=tracks)
 
     def search(self, query=None, uris=None):
@@ -49,8 +49,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if not query:
             uri = 'beetslocal:search-all'
             tracks = self.lib.items()
-            # albums = self.lib.albums()
-            # albums not used til advanced_search
+            albums = self.lib.albums()
         else:
             uri = uricompose('beetslocal',
                              None,
@@ -60,17 +59,17 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             track_query = self._build_beets_track_query(query)
             logger.debug('Build Query "%s":' % track_query)
             tracks = self.lib.items(track_query)
-            # if not 'track_name' in query:
+            if not 'track_name' in query:
             # when trackname queried dont search for albums
-            #    album_query = self._build_beets_album_query(query)
-            #    logger.debug('Build Query "%s":' % album_query)
-            #    albums = self.lib.albums(album_query)
+               album_query = self._build_beets_album_query(query)
+               logger.debug('Build Query "%s":' % album_query)
+               albums = self.lib.albums(album_query)
         logger.debug("Query found %s tracks and %s albums"
                      % (len(tracks), len(albums)))
         return SearchResult(
             uri=uri,
-            tracks=[self._convert_item(track) for track in tracks]
-            # albums=[self._convert_album(album) for album in albums]
+            tracks=[self._convert_item(track) for track in tracks],
+            albums=[self._convert_album(album) for album in albums]
         )
 
     def browse(self, uri):

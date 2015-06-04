@@ -14,7 +14,7 @@ def get_version(filename):
 setup(
     name='Mopidy-BeetsLocal',
     version=get_version('mopidy_beetslocal/__init__.py'),
-    url='https://github.com/rawdlite/mopidy-beetslocal',
+    url='https://github.com/rawdlite/mopidy-beets-local',
     license='Apache License, Version 2.0',
     author='Tom Roth',
     author_email='rawdlite@googlemail.com',
