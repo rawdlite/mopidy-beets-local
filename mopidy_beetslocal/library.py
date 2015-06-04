@@ -27,7 +27,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         # artists = []
         albums = []
         if not (('track_name' in query) or ('composer' in query)):
-        # when trackname or composer is queried dont search for albums
+            # when trackname or composer is queried dont search for albums
             albums = self._find_albums(query)
             logger.debug("Find found %s albums" % len(albums))
         #    artists=self._find_artists(query)
@@ -59,8 +59,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             track_query = self._build_beets_track_query(query)
             logger.debug('Build Query "%s":' % track_query)
             tracks = self.lib.items(track_query)
-            if not 'track_name' in query:
-            # when trackname queried dont search for albums
+            if 'track_name' not in query:
+                # when trackname queried dont search for albums
                 album_query = self._build_beets_album_query(query)
                 logger.debug('Build Query "%s":' % album_query)
                 albums = self.lib.albums(album_query)
