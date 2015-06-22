@@ -3,8 +3,12 @@ from __future__ import unicode_literals
 import datetime
 import locale
 import logging
+import os
+import sqlite3
+import sys
 
 from mopidy import backend
+from mopidy.exceptions import ExtensionError
 from mopidy.models import Album, Artist, Ref, SearchResult, Track
 
 from uritools import uricompose, urisplit
@@ -18,10 +22,28 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
     def __init__(self, *args, **kwargs):
         super(BeetsLocalLibraryProvider, self).__init__(*args, **kwargs)
-        import beets.library
-        self.lib = beets.library.Library(self.backend.beetslibrary)
+        try:
+            import beets.library
+        except:
+            logger.error('BeetsLocalBackend: could not import beets library')
+        if not os.path.isfile(self.backend.beetslibrary):
+            raise ExtensionError('Can not find %s'
+                                 % (self.backend.beetslibrary))
+        try:
+            self.lib = beets.library.Library(self.backend.beetslibrary)
+        except sqlite3.OperationalError, e:
+            logger.error('BeetsLocalBackend: %s', e)
+            raise ExtensionError('Mopidy-BeetsLocal can not open %s',
+                                 self.backend.beetslibrary)
+        except sqlite3.DatabaseError, e:
+            logger.error('BeetsLocalBackend: %s', e)
+            raise ExtensionError('Moidy-BeetsLocal can not open %s',
+                                 self.backend.beetslibrary)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            pass
 
-    def find_exact(self, query=None, uris=None):
+    def _find_exact(self, query=None, uris=None):
         logger.debug("Find query: %s in uris: %s" % (query, uris))
         self._validate_query(query)
         # artists = []
@@ -43,7 +65,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             albums=albums,
             tracks=tracks)
 
-    def search(self, query=None, uris=None):
+    def search(self, query=None, uris=None, exact=False):
+        if exact:
+            return self._find_exact(query, uris)
         albums = []
         logger.debug("Search query: %s in uris: %s" % (query, uris))
         if not query:
@@ -117,6 +141,41 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             logger.debug('Unknown URI: %s', uri)
         # logger.debug(result)
         return result
+
+    def lookup(self, uri):
+        logger.debug("looking up uri = %s of type %s" % (
+            uri.encode('ascii', 'ignore'), type(uri).__name__))
+        uri_dict = self.backend._extract_uri(uri)
+        item_type = uri_dict['item_type']
+        beets_id = uri_dict['beets_id']
+        logger.debug('item_type: "%s", beets_id: "%s"' % (item_type, beets_id))
+        if item_type == 'track':
+            try:
+                track = self.get_track(beets_id)
+                logger.debug('Beets track for id "%s": %s' %
+                             (beets_id, uri.encode('ascii', 'ignore')))
+                return [track]
+            except Exception as error:
+                logger.debug('Failed to lookup "%s": %s' % (uri, error))
+                return []
+        elif item_type == 'album':
+            try:
+                tracks = self.get_album(beets_id)
+                return tracks
+            except Exception as error:
+                logger.debug('Failed to lookup "%s": %s' % (uri, error))
+                return []
+        else:
+            logger.debug("Dont know what to do with item_type: %s" % item_type)
+            return []
+
+    def get_distinct(self, field, query=None):
+        logger.warn('get_distinct called field: %s, Query: %s' % (field,
+                                                                  query))
+        q = []
+        for key, values in (query.items() if query else []):
+            q.extend((key, value) for value in values)
+        logger.warn(q)
 
     def _browse_track(self, query):
         return self.lib.items('album_id:\'%s\'' % query['album'])
@@ -275,30 +334,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
     def get_album(self, beets_id):
         album = self.lib.get_album(beets_id)
         return [self._convert_item(item) for item in album.items()]
-
-    def lookup(self, uri):
-        logger.debug("looking up uri = %s of type %s" % (
-            uri, type(uri).__name__))
-        uri_dict = self.backend._extract_uri(uri)
-        item_type = uri_dict['item_type']
-        beets_id = uri_dict['beets_id']
-        if item_type == 'track':
-            try:
-                track = self.get_track(beets_id)
-                logger.debug('Beets track for id "%s": %s' % (beets_id, uri))
-                return [track]
-            except Exception as error:
-                logger.debug('Failed to lookup "%s": %s' % (uri, error))
-                return []
-        elif item_type == 'album':
-            try:
-                tracks = self.get_album(beets_id)
-                return tracks
-            except Exception as error:
-                logger.debug('Failed to lookup "%s": %s' % (uri, error))
-                return []
-        else:
-            logger.debug("Dont know what to do with item_type: %s" % item_type)
 
     def _validate_query(self, query):
         for (_, values) in query.iteritems():

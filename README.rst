@@ -53,6 +53,10 @@ Project resources
 
 Changelog
 =========
+v.0.0.8
+---------------------------------------
+Adapted for Mopidy v1.0
+
 v.0.0.7
 ---------------------------------------
 -Media Library in ncmpcpp works now.
