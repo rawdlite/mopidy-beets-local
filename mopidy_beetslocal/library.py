@@ -172,10 +172,15 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
     def get_distinct(self, field, query=None):
         logger.warn('get_distinct called field: %s, Query: %s' % (field,
                                                                   query))
-        q = []
-        for key, values in (query.items() if query else []):
-            q.extend((key, value) for value in values)
-        logger.warn(q)
+        logger.info('get_distinct not fully implemented yet')
+        result = []
+        if field == 'artist':
+            result = self._browse_artist(query)
+        elif field == 'genre':
+            result = self._browse_genre()
+        else:
+            result = []
+        return set([v[0] for v in result])
 
     def _browse_track(self, query):
         return self.lib.items('album_id:\'%s\'' % query['album'])
@@ -184,11 +189,19 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return self.lib.albums('mb_albumartistid:\'%s\' genre:\'%s\''
                                % (query['artist'], query['genre']))
 
-    def _browse_artist(self, query):
-        return self._query_beets_db('select Distinct albumartist, '
-                                    'mb_albumartistid from albums where '
-                                    'genre = \"%s\" order by albumartist'
-                                    % query['genre'])
+    def _browse_artist(self, query=None):
+        statement = 'select Distinct albumartist, mb_albumartistid from albums'
+        if query:
+            statement += ' where 1=1 '
+            statement += self._build_statement(query, 'genre', 'genre')
+            statement += self._build_statement(query, 'artist', 'albumartist')
+            statement += self._build_statement(query, 'album', 'album')
+            statement += self._build_statement(query, 'mb_albumid',
+                                               'mb_albumid')
+            statement += self._build_statement(query, 'date', 'year')
+        statement += ' order by albumartist'
+        logger.debug('browse_artist: %s' % statement)
+        return self._query_beets_db(statement)
 
     def _browse_genre(self):
         return self._query_beets_db('select Distinct genre '
@@ -278,7 +291,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
     def _find_albums(self, query):
         statement = ('select id, album, day, month, year, '
-                     'albumartist, tracktotal, disctotal, '
+                     'albumartist, disctotal, '
                      'mb_albumid, artpath, mb_albumartistid '
                      'from albums where 1=1 ')
         statement += self._build_statement(query, 'genre', 'genre')
@@ -298,15 +311,15 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             except:
                 date = None
             artist = Artist(name=row[5],
-                            musicbrainz_id=row[10],
-                            uri="beetslocal:artist:%s:" % row[10])
+                            musicbrainz_id=row[9],
+                            uri="beetslocal:artist:%s:" % row[9])
             albums.append(Album(name=row[1],
                                 date=date,
                                 artists=[artist],
-                                num_tracks=row[6],
-                                num_discs=row[7],
-                                musicbrainz_id=row[8],
-                                images=[row[9]],
+                                # num_tracks=row[6],
+                                num_discs=row[6],
+                                musicbrainz_id=row[7],
+                                images=[row[8]],
                                 uri="beetslocal:album:%s:" % row[0]))
         return albums
 
