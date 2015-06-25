@@ -151,7 +151,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         logger.debug('item_type: "%s", beets_id: "%s"' % (item_type, beets_id))
         if item_type == 'track':
             try:
-                track = self.get_track(beets_id)
+                track = self._get_track(beets_id)
                 logger.debug('Beets track for id "%s": %s' %
                              (beets_id, uri.encode('ascii', 'ignore')))
                 return [track]
@@ -160,7 +160,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 return []
         elif item_type == 'album':
             try:
-                tracks = self.get_album(beets_id)
+                tracks = self._get_album(beets_id)
                 return tracks
             except Exception as error:
                 logger.debug('Failed to lookup "%s": %s' % (uri, error))
@@ -172,15 +172,23 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
     def get_distinct(self, field, query=None):
         logger.warn('get_distinct called field: %s, Query: %s' % (field,
                                                                   query))
-        logger.info('get_distinct not fully implemented yet')
         result = []
         if field == 'artist':
             result = self._browse_artist(query)
         elif field == 'genre':
             result = self._browse_genre()
         else:
+            logger.info('get_distinct not fully implemented yet')
             result = []
         return set([v[0] for v in result])
+
+    def _get_track(self, beets_id):
+        track = self.lib.get_item(beets_id)
+        return self._convert_item(track)
+
+    def _get_album(self, beets_id):
+        album = self.lib.get_album(beets_id)
+        return [self._convert_item(item) for item in album.items()]
 
     def _browse_track(self, query):
         return self.lib.items('album_id:\'%s\'' % query['album'])
@@ -197,7 +205,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             statement += self._build_statement(query, 'artist', 'albumartist')
             statement += self._build_statement(query, 'album', 'album')
             statement += self._build_statement(query, 'mb_albumid',
-                                               'mb_albumid')
+                                                      'mb_albumid')
             statement += self._build_statement(query, 'date', 'year')
         statement += ' order by albumartist'
         logger.debug('browse_artist: %s' % statement)
@@ -220,13 +228,22 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return result
 
     def _build_statement(self, query, query_key, beets_key):
+        """
+        A proper mopidy query has a Array of values
+        Queries from mpd and browse requests hav strings
+        """
         statement = ""
         if query_key in query:
-            for query_string in query[query_key]:
+            values = query[query_key]
+            if type(values) is not list:
+                values = [values]
+            for query_string in values:
                 if '"' in query_string:
-                    statement += "and %s = \'%s\' " % (beets_key, query_string)
+                    statement += " and %s = \'%s\' " % (beets_key,
+                                                        query_string)
                 else:
-                    statement += 'and %s = \"%s\" ' % (beets_key, query_string)
+                    statement += ' and %s = \"%s\" ' % (beets_key,
+                                                        query_string)
         return statement
 
     def _find_tracks(self, query):
@@ -340,14 +357,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                   uri="beetslocal:artist:%s:" % row[1]))
         return artists
 
-    def get_track(self, beets_id):
-        track = self.lib.get_item(beets_id)
-        return self._convert_item(track)
-
-    def get_album(self, beets_id):
-        album = self.lib.get_album(beets_id)
-        return [self._convert_item(item) for item in album.items()]
-
     def _validate_query(self, query):
         for (_, values) in query.iteritems():
             if not values:
@@ -357,6 +366,10 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     raise LookupError('Missing query')
 
     def _build_beets_track_query(self, query):
+        """
+        Transforms a mopidy query into beets
+        query syntax
+        """
         beets_query = ""
         for key in query.keys():
             if key != 'any':
@@ -371,6 +384,10 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return '\'%s\'' % beets_query.strip()
 
     def _build_beets_album_query(self, query):
+        """
+        Transforms a mopidy query into beets
+        query syntax
+        """
         beets_query = ""
         for key in query.keys():
             if key != 'any':
@@ -402,6 +419,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return decoded_path
 
     def _convert_item(self, item):
+        """
+        Transforms a beets item into a mopidy Track
+        """
         if not item:
             return
         track_kwargs = {}
@@ -502,6 +522,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return track
 
     def _convert_album(self, album):
+        """
+        Transforms a beets album into a mopidy Track
+        """
         if not album:
             return
         album_kwargs = {}
