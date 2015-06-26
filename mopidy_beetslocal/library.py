@@ -72,7 +72,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if exact:
             return self._find_exact(query, uris)
         albums = []
-        
         if not query:
             uri = 'beetslocal:search-all'
             tracks = self.lib.items()
@@ -123,7 +122,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     uri=uricompose('beetslocal',
                                    None,
                                    'artist',
-                                   dict(genre=query['genre'][0], artist=row[1])),
+                                   dict(genre=query['genre'][0],
+                                        artist=row[1])),
                     name=row[0] if bool(row[0]) else u'No Artist'))
         elif level == "artist":
             for album in self._browse_album(query):
@@ -168,12 +168,13 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 logger.debug(u'Failed to lookup "%s": %s' % (uri, error))
                 return []
         else:
-            logger.debug(u"Dont know what to do with item_type: %s" % item_type)
+            logger.debug(u"Dont know what to do with item_type: %s" %
+                         item_type)
             return []
 
     def get_distinct(self, field, query=None):
         logger.warn(u'get_distinct called field: %s, Query: %s' % (field,
-                                                                  query))
+                                                                   query))
         query = self._sanitize_query(query)
         logger.debug(u'Search sanitized query: %s ' % query)
         result = []
@@ -252,11 +253,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                         query[key][index] = year
                     else:
                         del query[key][index]
-                    # we possibly could introduce query['year'],query['month'] etc.
+                    # we possibly could introduce query['year'],
+                    # query['month'] etc.
                     # Maybe later
         return query
 
-    def _sanitize_year(self,datestr):
+    def _sanitize_year(self, datestr):
         """
         Clients may send date field as Date String, Year or Zero
         """
@@ -264,11 +266,11 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             year = str(datetime.datetime.strptime(datestr, '%Y').date().year)
         except:
             try:
-                year = str(datetime.datetime.strptime(datestr, '%Y-%m-%d').date().year)
+                year = str(datetime.datetime.strptime(datestr,
+                                                      '%Y-%m-%d').date().year)
             except:
                 year = None
         return year
-        
 
     def _build_statement(self, query, query_key, beets_key):
         """
@@ -396,7 +398,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                   musicbrainz_id=row[1],
                                   uri="beetslocal:artist:%s:" % row[1]))
         return artists
-
 
     def _build_beets_track_query(self, query):
         """
