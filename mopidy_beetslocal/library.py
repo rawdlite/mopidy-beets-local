@@ -145,7 +145,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return result
 
     def lookup(self, uri):
-        logger.debug("looking up uri = %s of type %s" % (
+        logger.debug(u'looking up uri = %s of type %s' % (
             uri.encode('ascii', 'ignore'), type(uri).__name__))
         uri_dict = self.backend._extract_uri(uri)
         item_type = uri_dict['item_type']
@@ -154,7 +154,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if item_type == 'track':
             try:
                 track = self._get_track(beets_id)
-                logger.debug('Beets track for id "%s": %s' %
+                logger.debug(u'Beets track for id "%s": %s' %
                              (beets_id, uri.encode('ascii', 'ignore')))
                 return [track]
             except Exception as error:
@@ -495,7 +495,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             track_kwargs['bitrate'] = item['bitrate']
 
         if 'mtime' in item:
-            track_kwargs['last_modified'] = item['mtime']
+            track_kwargs['last_modified'] = int(item['mtime'])
 
         track_kwargs['date'] = None
         if self.backend.use_original_release_date:
