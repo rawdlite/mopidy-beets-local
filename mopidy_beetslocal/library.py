@@ -216,7 +216,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 name=row)
 
     def _browse_track(self, query):
-        tracks =  self.lib.items('album_id:\'%s\'' % query['album'][0])
+        tracks =  self.lib.items(['album_id:%s' % query['album'][0]])
         for track in tracks:
             yield Ref.track(
                 uri="beetslocal:track:%s:%s" % (track.id,
@@ -227,9 +227,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
     def _browse_album(self, query):
         logger.debug(u'browse_album query: %s' % query)
         # import pdb; pdb.set_trace()
-        beets_query = 'mb_albumartistid:\'%s\' ' % query['mb_artistid'][0]
+        beets_query = ['mb_albumartistid:%s' % query['mb_artistid'][0]]
         if 'genre' in query:
-            beets_query += ' genre:\'%s\'' % query['genre'][0]
+            beets_query.append('genre:%s' % query['genre'][0])
         logger.debug('beets_query %s', beets_query)
         for album in self.lib.albums(beets_query):
             yield Ref.album(
@@ -284,7 +284,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 name=row[0] if bool(row[0]) else u'No Grouping')
 
     def _browse_compilations(self):
-        for album in self.lib.albums('comp:1'):
+        for album in self.lib.albums(['comp:1']):
             yield Ref.album(
                 uri=uricompose('beetslocal',
                                None,
@@ -505,34 +505,34 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         Transforms a mopidy query into beets
         query syntax
         """
-        beets_query = ""
+        beets_query = []
         for key in query.keys():
             if key != 'any':
                 if key == 'track_name':
-                    beets_query += 'title'
+                    beets_key = 'title'
                 else:
-                    beets_query += key
+                    beets_key = key
             # beets_query += "::(" + "|".join(query[key]) + ") "
-            beets_query += ":" + " ".join(query[key]) + " "
+            beets_query.append('%s:%s' % (beets_key, (' '.join(query[key])).strip()))
             logger.info(beets_query)
         # return json.dumps(self._decode_path(beets_query).strip())
-        return '\'%s\'' % beets_query.strip()
+        return beets_query
 
     def _build_beets_album_query(self, query):
         """
         Transforms a mopidy query into beets
         query syntax
         """
-        beets_query = ""
+        beets_query = []
         for key in query.keys():
             if key != 'any':
                 if key == 'artist':
-                    beets_query += 'albumartist'
+                    beets_key = 'albumartist'
                 else:
-                    beets_query += key
-            beets_query += ":" + " ".join(query[key]) + " "
+                    beets_key = key
+                beets_query.append('%s:%s' % (beets_key, (' '.join(query[key])).strip()))
             logger.info(beets_query)
-        return '\'%s\'' % beets_query.strip()
+        return beets_query
 
     def _decode_path(self, path):
         default_encoding = locale.getpreferredencoding()
