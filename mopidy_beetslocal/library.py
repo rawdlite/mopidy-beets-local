@@ -65,26 +65,21 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             # when trackname or composer is queried dont search for albums
             albums = self._find_albums(query)
             logger.debug('Find found %s albums' % len(albums))
-        #    artists=self._find_artists(query)
-        #    logger.debug("Find found %s artists" % len(artists))
         try:
             tracks = self._find_tracks(query)
         except:
             logger.debug("EX = %s", sys.exc_info()[0])
-            import pdb; pdb.set_trace()
         logger.debug('Find found %s tracks' % len(tracks))
         return SearchResult(
             uri=uricompose('beetslocal',
                            None,
                            'find',
                            query),
-            # artists=artists,
             albums=albums,
             tracks=tracks)
 
     def search(self, query=None, uris=None, exact=False):
         logger.debug('Search query: %s in uris: %s' % (query, uris))
-        # import pdb; pdb.set_trace()
         query = self._sanitize_query(query)
         logger.debug('Search sanitized query: %s ' % query)
         if exact:
@@ -125,7 +120,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         result = []
         if not level:
             logger.error('No level for uri %s', uri)
-            # import pdb; pdb.set_trace()
         if level == 'root':
             return list(self._browse_root())
         elif level == "compilations":
@@ -171,7 +165,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             return list(self._browse_track(query))
         else:
             logger.debug('Unknown URI: %s', uri)
-        # logger.debug(result)
         return result
 
     def lookup(self, uri):
@@ -245,7 +238,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
     def _browse_album(self, query):
         logger.debug(u'browse_album query: %s' % query)
-        # import pdb; pdb.set_trace()
         beets_query = []
         if 'mb_artistid' in query:
             beets_query.append('mb_albumartistid:%s' % query['mb_artistid'][0])
@@ -263,13 +255,11 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
     def _browse_artist(self, query=None):
         logger.debug('browse artist query: %s', str(query))
-        # import pdb; pdb.set_trace()
         statement = ('select Distinct albums.albumartist, albums.mb_albumartistid from items'
                      ' join albums on items.album_id = albums.id'
                      ' where 1=1 ')
         for key in query:
             statement += self._build_statement(query, key)
-        #statement += ' order by albums.albumartist'
         logger.debug('browse_artist: %s' % statement)
         old_url_query = {}
         for k, v in query.items():
@@ -375,7 +365,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             try:
                 result = tx.query(statement)
             except:
-                # import pdb; pdb.set_trace()
                 logger.error('Statement failed: %s' % statement)
                 pass
         return result
@@ -385,7 +374,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         We want a consistent query structure that later code
         can rely on
         """
-        # import pdb; pdb.set_trace()
         if not query:
             return query
         original_years = []
@@ -394,7 +382,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 del query[key]
             if type(values) is not list:
                 query[key] = [values]
-                # import pdb; pdb.set_trace()
             if not values:
                 continue
             if key == 'date':
@@ -549,10 +536,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     beets_key = 'title'
                 else:
                     beets_key = key
-            # beets_query += "::(" + "|".join(query[key]) + ") "
             beets_query.append('%s:%s' % (beets_key, (' '.join(query[key])).strip()))
             logger.info(beets_query)
-        # return json.dumps(self._decode_path(beets_query).strip())
         return beets_query
 
     def _build_beets_album_query(self, query):
@@ -735,9 +720,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     album_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
                 except:
                     pass
-
-        # if 'added' in item:
-        #    album_kwargs['last_modified'] = album['added']
 
         if 'artpath' in album:
             album_kwargs['images'] = [album['artpath']]
