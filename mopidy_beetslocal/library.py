@@ -228,13 +228,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 name=row)
 
     def _browse_track(self, query):
-        tracks =  self.lib.items(['album_id:%s' % query['album'][0]])
+        tracks = self.lib.items(['album_id:%s' % query['album'][0]])
         for track in tracks:
             yield Ref.track(
                 uri="beetslocal:track:%s:%s" % (track.id,
                                                 track.path.decode('utf8')),
                 name=track.title)
-
 
     def _browse_album(self, query):
         logger.debug(u'browse_album query: %s' % query)
@@ -255,9 +254,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
 
     def _browse_artist(self, query=None):
         logger.debug('browse artist query: %s', str(query))
-        statement = ('select Distinct albums.albumartist, albums.mb_albumartistid from items'
-                     ' join albums on items.album_id = albums.id'
-                     ' where 1=1 ')
+        statement = (
+            'select Distinct albums.albumartist, albums.mb_albumartistid'
+            ' from items'
+            ' join albums on items.album_id = albums.id'
+            ' where 1=1 '
+        )
         for key in query:
             statement += self._build_statement(query, key)
         logger.debug('browse_artist: %s' % statement)
@@ -272,7 +274,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 url_query['mb_artistid'] = row[1]
             else:
                 url_query['albumartist'] = row[0]
-            yield  Ref.directory(
+            yield Ref.directory(
                 uri=uricompose('beetslocal',
                                None,
                                'album',
@@ -320,8 +322,10 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 name=album.album)
 
     def _browse_mood(self):
-        for row in self._query_beets_db('select distinct value from item_attributes'
-                                    ' where key = "mood";'):
+        for row in self._query_beets_db(
+            'select distinct value from item_attributes'
+            ' where key = "mood";'
+        ):
             yield Ref.directory(
                 uri=uricompose('beetslocal',
                                None,
@@ -329,10 +333,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                dict(mood=row[0])),
                 name=row[0])
 
-
     def _browse_format(self):
         for row in self._query_beets_db('select distinct format from items;'):
-            yield  Ref.directory(
+            yield Ref.directory(
                 uri=uricompose('beetslocal',
                                None,
                                'artist',
@@ -340,8 +343,10 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 name=row[0])
 
     def _browse_samplerate(self):
-        for row in self._query_beets_db('select distinct samplerate from items;'):
-            yield  Ref.directory(
+        for row in self._query_beets_db(
+            'select distinct samplerate from items;'
+        ):
+            yield Ref.directory(
                 uri=uricompose('beetslocal',
                                None,
                                'artist',
@@ -349,14 +354,15 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                 name=str(row[0]))
 
     def _browse_year(self):
-        for row in self._query_beets_db('select distinct original_year from albums;'):
-            yield  Ref.directory(
+        for row in self._query_beets_db(
+            'select distinct original_year from albums;'
+        ):
+            yield Ref.directory(
                 uri=uricompose('beetslocal',
                                None,
                                'artist',
                                dict(year=row[0])),
                 name=str(row[0]))
-
 
     def _query_beets_db(self, statement):
         result = []
@@ -430,11 +436,13 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return statement
 
     def _find_tracks(self, query):
-        statement = ('select id, title, original_day, original_month, original_year, artist, album, '
-                     'composer, track, disc, length,  bitrate, comments, '
-                     'mb_trackid, mtime, genre, tracktotal, disctotal, '
-                     'mb_albumid, mb_albumartistid, albumartist, mb_artistid '
-                     'from items where 1=1 ')
+        statement = (
+            'select id, title, original_day, original_month, original_year, '
+            'artist, album, composer, track, disc, length,  bitrate, '
+            'comments, mb_trackid, mtime, genre, tracktotal, disctotal, '
+            'mb_albumid, mb_albumartistid, albumartist, mb_artistid '
+            'from items where 1=1 '
+        )
 
         for key in query:
             if key == 'track_name':
@@ -453,7 +461,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                               musicbrainz_id='',
                               uri="beetslocal:composer:%s:" % row[7])
             album = Album(name=row[6],
-                          date=self._build_date_string(row[4],row[3],row[2]),
+                          date=self._build_date_string(row[4], row[3], row[2]),
                           artists=[albumartist],
                           num_tracks=row[16],
                           num_discs=row[17],
@@ -465,7 +473,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                 composers=[composer],
                                 track_no=row[8],
                                 disc_no=row[9],
-                                date=self._build_date_string(row[4],row[3],row[2]),
+                                date=self._build_date_string(row[4], row[3],
+                                                             row[2]),
                                 length=int(row[10] * 1000),
                                 bitrate=row[11],
                                 comment=row[12],
@@ -476,10 +485,12 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         return tracks
 
     def _find_albums(self, query):
-        statement = ('select id, album, original_day, original_month, original_year, '
-                     'albumartist, disctotal, '
-                     'mb_albumid, artpath, mb_albumartistid '
-                     'from albums where 1=1 ')
+        statement = (
+            'select id, album, original_day, original_month, original_year, '
+            'albumartist, disctotal, '
+            'mb_albumid, artpath, mb_albumartistid '
+            'from albums where 1=1 '
+        )
         for key in query:
             if key == 'artist':
                 key = 'albumartist'
@@ -492,11 +503,13 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                             musicbrainz_id=row[9],
                             uri="beetslocal:artist:%s:" % row[9])
             albums.append(Album(name=row[1],
-                                date=self._build_date_string(row[4],row[3],row[2]),
+                                date=self._build_date_string(row[4], row[3],
+                                                             row[2]),
                                 artists=[artist],
                                 num_discs=row[6],
                                 musicbrainz_id=row[7],
-                                # Expected images to be a collection of basestring, not [None]
+                                # Expected images to be a collection
+                                # of basestring, not [None]
                                 # images=[row[8]],
                                 uri="beetslocal:album:%s:" % row[0]))
         return albums
@@ -514,7 +527,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                   uri="beetslocal:artist:%s:" % row[1]))
         return artists
 
-    def _build_date_string(self,year=0,month=0,day=0):
+    def _build_date_string(self, year=0, month=0, day=0):
         date = ""
         if not year == 0:
             date = str(year)
@@ -536,7 +549,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     beets_key = 'title'
                 else:
                     beets_key = key
-            beets_query.append('%s:%s' % (beets_key, (' '.join(query[key])).strip()))
+            beets_query.append('%s:%s' % (beets_key,
+                                          (' '.join(query[key])).strip()))
             logger.info(beets_query)
         return beets_query
 
@@ -552,7 +566,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                     beets_key = 'albumartist'
                 else:
                     beets_key = key
-                beets_query.append('%s:%s' % (beets_key, (' '.join(query[key])).strip()))
+                beets_query.append('%s:%s' % (beets_key,
+                                              (' '.join(query[key])).strip()))
             logger.info(beets_query)
         return beets_query
 
