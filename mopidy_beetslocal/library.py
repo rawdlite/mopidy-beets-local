@@ -19,8 +19,21 @@ logger = logging.getLogger(__name__)
 class BeetsLocalLibraryProvider(backend.LibraryProvider):
     ROOT_URI = 'beetslocal:root'
     root_directory = Ref.directory(uri=ROOT_URI, name='Local (beets)')
-    FIRST_LEVEL = ['Grouping','Genre','Mood','Format','Samplerate','Year','Compilations','Added At']
-    ADDED_LEVEL = ['Last Month','Last Week','Last Day']
+    FIRST_LEVEL = [
+        'Grouping',
+        'Genre',
+        'Mood',
+        'Format',
+        'Samplerate',
+        'Year',
+        'Compilations',
+        'Added At',
+    ]
+    ADDED_LEVEL = [
+        'Last Month',
+        'Last Week',
+        'Last Day',
+    ]
 
     def __init__(self, *args, **kwargs):
         super(BeetsLocalLibraryProvider, self).__init__(*args, **kwargs)
