@@ -2,6 +2,7 @@
 *.pyc
 *.swp
 .coverage
+xunit-py27.xml
 .tox/
 MANIFEST
 build/

@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import datetime
-import locale
 import logging
 import os
 import sqlite3
@@ -11,7 +10,7 @@ from mopidy import backend
 from mopidy.exceptions import ExtensionError
 from mopidy.models import Album, Artist, Ref, SearchResult, Track
 
-from uritools import uricompose, urisplit
+from uritools import uricompose, uriencode, urisplit
 
 logger = logging.getLogger(__name__)
 
@@ -136,8 +135,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         elif level == "album":
             for track in self._browse_track(query):
                 result.append(Ref.track(
-                    uri="beetslocal:track:%s:%s" % (track.id,
-                                                    track.path.decode('utf8')),
+                    uri="beetslocal:track:%s:%s" % (
+                        track.id,
+                        uriencode(track.path, '/')),
                     name=track.title))
         else:
             logger.debug('Unknown URI: %s', uri)
@@ -343,7 +343,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                 bitrate=row[11],
                                 comment=row[12],
                                 musicbrainz_id=row[13],
-                                last_modified=row[14],
+                                last_modified=int(row[14] * 1000),
                                 genre=row[15],
                                 uri="beetslocal:track:%s:" % row[0]))
         return tracks
@@ -414,7 +414,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             # beets_query += "::(" + "|".join(query[key]) + ") "
             beets_query += ":" + " ".join(query[key]) + " "
             logger.info(beets_query)
-        # return json.dumps(self._decode_path(beets_query).strip())
         return '\'%s\'' % beets_query.strip()
 
     def _build_beets_album_query(self, query):
@@ -432,25 +431,6 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             beets_query += ":" + " ".join(query[key]) + " "
             logger.info(beets_query)
         return '\'%s\'' % beets_query.strip()
-
-    def _decode_path(self, path):
-        default_encoding = locale.getpreferredencoding()
-        decoded_path = None
-        try:
-            decoded_path = path.decode(default_encoding)
-        except:
-            pass
-        if not decoded_path:
-            try:
-                decoded_path = path.decode('utf-8')
-            except:
-                pass
-        if not decoded_path:
-            try:
-                decoded_path = path.decode('ISO-8859-1')
-            except:
-                pass
-        return decoded_path
 
     def _convert_item(self, item):
         """
@@ -495,7 +475,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             track_kwargs['bitrate'] = item['bitrate']
 
         if 'mtime' in item:
-            track_kwargs['last_modified'] = int(item['mtime'])
+            track_kwargs['last_modified'] = int(item['mtime'] * 1000)
 
         track_kwargs['date'] = None
         if self.backend.use_original_release_date:
@@ -535,7 +515,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if 'path' in item:
             track_kwargs['uri'] = "beetslocal:track:%s:%s" % (
                 item['id'],
-                self._decode_path(item['path']))
+                uriencode(item['path'], '/'))
 
         if 'length' in item:
             track_kwargs['length'] = int(item['length']) * 1000
