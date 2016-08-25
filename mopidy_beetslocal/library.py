@@ -45,6 +45,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
     def _find_exact(self, query=None, uris=None):
         logger.debug("Find query: %s in uris: %s" % (query, uris))
         # artists = []
+        # import pdb; pdb.set_trace()
         albums = []
         if not (('track_name' in query) or ('composer' in query)):
             # when trackname or composer is queried dont search for albums
@@ -288,6 +289,19 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                                         query_string)
         return statement
 
+    def _build_date(self, year, month, day):
+        month = 1 if month == 0 else month
+        day = 1 if day == 0 else day
+        try:
+            d = datetime.datetime(
+                year,
+                month,
+                day)
+            date = '{:%Y-%m-%d}'.format(d)
+        except:
+            date = None
+        return date
+
     def _find_tracks(self, query):
         statement = ('select id, title, day, month, year, artist, album, '
                      'composer, track, disc, length,  bitrate, comments, '
@@ -308,14 +322,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         tracks = []
         result = self._query_beets_db(statement)
         for row in result:
-            try:
-                d = datetime.datetime(
-                    row[4],
-                    row[3],
-                    row[2])
-                date = '{:%Y-%m-%d}'.format(d)
-            except:
-                date = None
+            date = self._build_date(row[4], row[3], row[2])
             artist = Artist(name=row[5],
                             musicbrainz_id=row[21],
                             uri="beetslocal:artist:%s:" % row[21])
@@ -338,8 +345,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                 composers=[composer],
                                 track_no=row[8],
                                 disc_no=row[9],
-                                date=row[4],
-                                length=row[10] * 1000,
+                                date=date,
+                                length=int(row[10] * 1000),
                                 bitrate=row[11],
                                 comment=row[12],
                                 musicbrainz_id=row[13],
@@ -361,14 +368,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         result = self._query_beets_db(statement)
         albums = []
         for row in result:
-            try:
-                d = datetime.datetime(
-                    row[4],
-                    row[3],
-                    row[2])
-                date = '{:%Y-%m-%d}'.format(d)
-            except:
-                date = None
+            date = self._build_date(row[4], row[3], row[2])
             artist = Artist(name=row[5],
                             musicbrainz_id=row[9],
                             uri="beetslocal:artist:%s:" % row[9])
@@ -378,7 +378,7 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                 # num_tracks=row[6],
                                 num_discs=row[6],
                                 musicbrainz_id=row[7],
-                                images=[row[8]],
+                                # images=[row[8]],
                                 uri="beetslocal:album:%s:" % row[0]))
         return albums
 
@@ -477,27 +477,18 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         if 'mtime' in item:
             track_kwargs['last_modified'] = int(item['mtime'] * 1000)
 
-        track_kwargs['date'] = None
         if self.backend.use_original_release_date:
             if 'original_year' in item:
-                try:
-                    d = datetime.datetime(
-                        item['original_year'],
-                        item['original_month'],
-                        item['original_day'])
-                    track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
-                except:
-                    pass
+                track_kwargs['date'] = self._build_date(
+                                       item['original_year'],
+                                       item['original_month'],
+                                       item['original_day'])
         else:
             if 'year' in item:
-                try:
-                    d = datetime.datetime(
-                        item['year'],
-                        item['month'],
-                        item['day'])
-                    track_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
-                except:
-                    pass
+                track_kwargs['date'] = self._build_date(
+                                       item['year'],
+                                       item['month'],
+                                       item['day'])
 
         if 'mb_trackid' in item:
             track_kwargs['musicbrainz_id'] = item['mb_trackid']
@@ -581,8 +572,8 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         # if 'added' in item:
         #    album_kwargs['last_modified'] = album['added']
 
-        if 'artpath' in album:
-            album_kwargs['images'] = [album['artpath']]
+        # if 'artpath' in album:
+        #    album_kwargs['images'] = [album['artpath']]
 
         if 'albumartist' in album:
             artist_kwargs['name'] = album['albumartist']
