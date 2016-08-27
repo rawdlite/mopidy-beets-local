@@ -54,15 +54,15 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         #    artists=self._find_artists(query)
         #    logger.debug("Find found %s artists" % len(artists))
         tracks = self._find_tracks(query)
-        logger.debug(u'Find found %s tracks' % len(tracks))
+        # logger.debug(u'Find found %s tracks' % len(tracks))
         return SearchResult(
             uri=uricompose('beetslocal',
                            None,
                            'find',
                            query),
             # artists=artists,
-            albums=albums,
-            tracks=tracks)
+            tracks=tracks,
+            albums=albums)
 
     def search(self, query=None, uris=None, exact=False):
         logger.debug(u'Search query: %s in uris: %s' % (query, uris))
@@ -325,20 +325,28 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             date = self._build_date(row[4], row[3], row[2])
             artist = Artist(name=row[5],
                             musicbrainz_id=row[21],
-                            uri="beetslocal:artist:%s:" % row[21])
+                            uri=uricompose('beetslocal',
+                                           None,
+                                           'artist:%s:' % row[21]))
             albumartist = Artist(name=row[20],
                                  musicbrainz_id=row[19],
-                                 uri="beetslocal:artist:%s:" % row[19])
+                                 uri=uricompose('beetslocal',
+                                                None,
+                                                'artist:%s:' % row[19]))
             composer = Artist(name=row[7],
                               musicbrainz_id='',
-                              uri="beetslocal:composer:%s:" % row[7])
+                              uri=uricompose('beetslocal',
+                                             None,
+                                             'composer:%s:' % row[7]))
             album = Album(name=row[6],
                           date=date,
                           artists=[albumartist],
                           num_tracks=row[16],
                           num_discs=row[17],
                           musicbrainz_id=row[18],
-                          uri="beetslocal:mb_album:%s:" % row[18])
+                          uri=uricompose('beetslocal',
+                                         None,
+                                         'mb_album:%s:' % row[18]))
             tracks.append(Track(name=row[1],
                                 artists=[artist],
                                 album=album,
@@ -352,7 +360,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                 musicbrainz_id=row[13],
                                 last_modified=int(row[14] * 1000),
                                 genre=row[15],
-                                uri="beetslocal:track:%s:" % row[0]))
+                                uri=uricompose('beetslocal',
+                                               None,
+                                               'track:%s:' % row[0])))
         return tracks
 
     def _find_albums(self, query):
@@ -371,7 +381,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             date = self._build_date(row[4], row[3], row[2])
             artist = Artist(name=row[5],
                             musicbrainz_id=row[9],
-                            uri="beetslocal:artist:%s:" % row[9])
+                            uri=uricompose('beetslocal',
+                                           None,
+                                           'artist:%s:' % row[9]))
             albums.append(Album(name=row[1],
                                 date=date,
                                 artists=[artist],
@@ -379,7 +391,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
                                 num_discs=row[6],
                                 musicbrainz_id=row[7],
                                 # images=[row[8]],
-                                uri="beetslocal:album:%s:" % row[0]))
+                                uri=uricompose('beetslocal',
+                                               None,
+                                               'album:%s:' % row[0])))
         return albums
 
     def _find_artists(self, query):
@@ -396,7 +410,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         for row in result:
             artists.append(Artist(name=row[0],
                                   musicbrainz_id=row[1],
-                                  uri="beetslocal:artist:%s:" % row[1]))
+                                  uri=uricompose('beetslocal',
+                                                 None,
+                                                 'artist:%s:' % row[1])))
         return artists
 
     def _build_beets_track_query(self, query):
@@ -550,24 +566,15 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
         album_kwargs['date'] = None
         if self.backend.use_original_release_date:
             if 'original_year' in album:
-                try:
-                    d = datetime.datetime(
-                        album['original_year'],
-                        album['original_month'],
-                        album['original_day'])
-                    album_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
-                except:
-                    pass
+                    album_kwargs['date'] = self._build_date(
+                                                album['original_year'],
+                                                album['original_month'],
+                                                album['original_day'])
         else:
             if 'year' in album:
-                try:
-                    d = datetime.datetime(
-                        album['year'],
-                        album['month'],
-                        album['day'])
-                    album_kwargs['date'] = '{:%Y-%m-%d}'.format(d)
-                except:
-                    pass
+                    album_kwargs['date'] = self._build_date(album['year'],
+                                                            album['month'],
+                                                            album['day'])
 
         # if 'added' in item:
         #    album_kwargs['last_modified'] = album['added']
@@ -586,7 +593,9 @@ class BeetsLocalLibraryProvider(backend.LibraryProvider):
             album_kwargs['artists'] = [artist]
 
         if 'id' in album:
-            album_kwargs['uri'] = "beetslocal:album:%s:" % album['id']
+            album_kwargs['uri'] = uricompose('beetslocal',
+                                             None,
+                                             'album:%s:' % album['id'])
 
         album = Album(**album_kwargs)
         return album
